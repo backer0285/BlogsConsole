@@ -22,20 +22,30 @@ do
     if (choice == "1")
     {
         logger.Info("Option \"1\" selected");
+        Console.WriteLine();
         DisplayBlogs();
+        Console.WriteLine();
     }
     else if (choice == "2")
     {
         logger.Info("Option \"2\" selected");
+        Console.WriteLine();
         AddBlog();
+        Console.WriteLine();
     }
     else if (choice == "3")
     {
         logger.Info("Option \"3\" selected");
+        Console.WriteLine();
+        CreatePost();
+        Console.WriteLine();
     }
     else if (choice == "4")
     {
         logger.Info("Option \"4\" selected");
+        Console.WriteLine();
+
+        Console.WriteLine();
     }
 } while (choice != "q" && choice != "Q");
 
@@ -47,13 +57,11 @@ void DisplayBlogs()
     var db = new BloggingContext();
     var query = db.Blogs.OrderBy(b => b.Name);
 
-    Console.WriteLine();
     Console.WriteLine(query.Count() + " Blogs returned");
     foreach (var item in query)
     {
         Console.WriteLine(item.Name);
     }
-    Console.WriteLine();
 }
 
 void AddBlog()
@@ -61,19 +69,38 @@ void AddBlog()
     try
     {
         // Create and save a new Blog
-        Console.WriteLine();
         Console.Write("Enter a name for a new Blog: ");
         var name = Console.ReadLine();
 
-        var blog = new Blog { Name = name };
+        if (!String.IsNullOrEmpty(name))
+        {
+            var blog = new Blog { Name = name };
 
-        var db = new BloggingContext();
-        db.AddBlog(blog);
-        logger.Info("Blog added - {name}", name);
-        Console.WriteLine();
+            var db = new BloggingContext();
+            db.AddBlog(blog);
+            logger.Info("Blog added - {name}", name);
+        }
+        else
+        {
+            logger.Error("Blog name cannot be null");
+        }
     }
     catch (Exception ex)
     {
         logger.Error(ex.Message);
+    }
+}
+
+void CreatePost()
+{
+    Console.WriteLine("Select the blog you would like to post to: ");
+
+    var db = new BloggingContext();
+    var query = db.Blogs.OrderBy(b => b.Name);
+    int counter = 1;
+    foreach (var item in query)
+    {
+        Console.WriteLine(counter + ") " + item.Name);
+        counter++;
     }
 }
