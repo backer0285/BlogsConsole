@@ -1,4 +1,5 @@
 ﻿﻿using NLog;
+using System.Data;
 using System.Linq;
 
 // See https://aka.ms/new-console-template for more information
@@ -44,7 +45,7 @@ do
     {
         logger.Info("Option \"4\" selected");
         Console.WriteLine();
-
+        DisplayPosts();
         Console.WriteLine();
     }
 } while (choice != "q" && choice != "Q");
@@ -98,14 +99,7 @@ void CreatePost()
         Console.WriteLine("Select the blog you would like to post to: ");
 
         var db = new BloggingContext();
-        var query = db.Blogs.OrderBy(b => b.BlogId);
-        int counter = 1;
-        foreach (var item in query)
-        {
-            Console.WriteLine(item.BlogId + ") " + item.Name);
-            counter++;
-        }
-        var blogChoice = Console.ReadLine();
+        var blogChoice = GetBlogMenuChoice();
 
         if (int.TryParse(blogChoice, out int blogId))
         {
@@ -127,7 +121,7 @@ void CreatePost()
                     logger.Error("Post title cannot be null");
                 }
             }
-            else 
+            else
             {
                 logger.Error("There are no Blogs saved with that Id");
             }
@@ -142,4 +136,58 @@ void CreatePost()
         logger.Error(ex.Message);
     }
 
+}
+
+void DisplayPosts()
+{
+    Console.WriteLine("Select the blog's posts to display: ");
+    Console.WriteLine("0) Posts from all blogs");
+    var db = new BloggingContext();
+    var blogChoice = GetBlogMenuChoice();
+
+    if (int.TryParse(blogChoice, out int blogId))
+    {
+        if (db.Blogs.Any(b => b.BlogId.Equals(blogId)) || blogId == 0)
+        {
+            if (blogId == 0)
+            {
+                var tableJoin = db.Blogs.Join(db.Posts, blog => blog.BlogId, post => post.BlogId, (blog, post) => new { BlogName = blog.Name, Title = post.Title, Content = post.Content });
+                Console.WriteLine(tableJoin.Count() + " post(s) returned");
+                Console.WriteLine();
+
+                foreach (var item in tableJoin)
+                {
+                    Console.WriteLine("Blog: " + item.BlogName);
+                    Console.WriteLine("Title: " + item.Title);
+                    Console.WriteLine("Content: " + item.Content);
+                    Console.WriteLine();
+                }
+            }
+            else
+            {
+
+            }
+        }
+        else
+        {
+            logger.Error("There are no Blogs saved with that Id");
+        }
+    }
+    else
+    {
+        logger.Error("Invalid Blog Id");
+    }
+}
+
+string GetBlogMenuChoice()
+{
+    var db = new BloggingContext();
+    var query = db.Blogs.OrderBy(b => b.BlogId);
+    int counter = 1;
+    foreach (var item in query)
+    {
+        Console.WriteLine(item.BlogId + ") " + item.Name);
+        counter++;
+    }
+    return Console.ReadLine();
 }
