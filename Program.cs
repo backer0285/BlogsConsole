@@ -1,6 +1,5 @@
 ﻿﻿using NLog;
 using System.Data;
-using System.Linq;
 
 // See https://aka.ms/new-console-template for more information
 string path = Directory.GetCurrentDirectory() + "\\nlog.config";
@@ -54,7 +53,6 @@ logger.Info("Program ended");
 
 void DisplayBlogs()
 {
-    // Display all Blogs from the database
     var db = new BloggingContext();
     var query = db.Blogs.OrderBy(b => b.Name);
 
@@ -69,7 +67,6 @@ void AddBlog()
 {
     try
     {
-        // Create and save a new Blog
         Console.Write("Enter a name for a new Blog: ");
         var name = Console.ReadLine();
 
@@ -101,6 +98,7 @@ void CreatePost()
         var db = new BloggingContext();
         var blogChoice = GetBlogMenuChoice();
 
+        // nested logic handles invalid entries
         if (int.TryParse(blogChoice, out int blogId))
         {
             if (db.Blogs.Any(b => b.BlogId.Equals(blogId)))
@@ -147,25 +145,25 @@ void DisplayPosts()
 
     if (int.TryParse(blogChoice, out int blogId))
     {
+        // only the ID of a blog or "0" are permissible input
         if (db.Blogs.Any(b => b.BlogId.Equals(blogId)) || blogId == 0)
         {
-            if (blogId == 0)
-            {
-                var tableJoin = db.Blogs.Join(db.Posts, blog => blog.BlogId, post => post.BlogId, (blog, post) => new { BlogName = blog.Name, Title = post.Title, Content = post.Content });
-                Console.WriteLine(tableJoin.Count() + " post(s) returned");
-                Console.WriteLine();
+            // allows access to blog title not in post tables
+            var tableJoin = db.Blogs.Join(db.Posts, blog => blog.BlogId, post => post.BlogId, (blog, post) => new { BlogID = blog.BlogId, BlogName = blog.Name, Title = post.Title, Content = post.Content });
 
-                foreach (var item in tableJoin)
-                {
-                    Console.WriteLine("Blog: " + item.BlogName);
-                    Console.WriteLine("Title: " + item.Title);
-                    Console.WriteLine("Content: " + item.Content);
-                    Console.WriteLine();
-                }
+            // filters table by blog ID
+            if (blogId != 0)
+            {
+                tableJoin = tableJoin.Where(t => t.BlogID.Equals(blogId));
             }
-            else
-            {
 
+            Console.WriteLine(tableJoin.Count() + " post(s) returned");
+
+            foreach (var item in tableJoin)
+            {
+                Console.WriteLine("Blog: " + item.BlogName);
+                Console.WriteLine("Title: " + item.Title);
+                Console.WriteLine("Content: " + item.Content);
             }
         }
         else
@@ -179,6 +177,7 @@ void DisplayPosts()
     }
 }
 
+// generic menu of blogs sorted by ID
 string GetBlogMenuChoice()
 {
     var db = new BloggingContext();
