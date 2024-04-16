@@ -93,14 +93,53 @@ void AddBlog()
 
 void CreatePost()
 {
-    Console.WriteLine("Select the blog you would like to post to: ");
-
-    var db = new BloggingContext();
-    var query = db.Blogs.OrderBy(b => b.Name);
-    int counter = 1;
-    foreach (var item in query)
+    try
     {
-        Console.WriteLine(counter + ") " + item.Name);
-        counter++;
+        Console.WriteLine("Select the blog you would like to post to: ");
+
+        var db = new BloggingContext();
+        var query = db.Blogs.OrderBy(b => b.BlogId);
+        int counter = 1;
+        foreach (var item in query)
+        {
+            Console.WriteLine(item.BlogId + ") " + item.Name);
+            counter++;
+        }
+        var blogChoice = Console.ReadLine();
+
+        if (int.TryParse(blogChoice, out int blogId))
+        {
+            if (db.Blogs.Any(b => b.BlogId.Equals(blogId)))
+            {
+                Console.WriteLine("Enter the Post title");
+                string title = Console.ReadLine();
+
+                if (!String.IsNullOrEmpty(title))
+                {
+                    Console.WriteLine("Enter the Post content");
+                    string content = Console.ReadLine();
+                    var post = new Post { Title = title, Content = content, BlogId = blogId };
+                    db.AddPost(post);
+                    logger.Info("Blog added - {content}", content);
+                }
+                else
+                {
+                    logger.Error("Post title cannot be null");
+                }
+            }
+            else 
+            {
+                logger.Error("There are no Blogs saved with that Id");
+            }
+        }
+        else
+        {
+            logger.Error("Invalid Blog Id");
+        }
     }
+    catch (Exception ex)
+    {
+        logger.Error(ex.Message);
+    }
+
 }
